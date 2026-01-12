@@ -1,178 +1,135 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-analytics.js";
-import { push } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
-
 document.addEventListener('DOMContentLoaded', function () {
-    const btnOpenModal = document.querySelector('#btnOpenModal');
-    const modalBlock = document.querySelector('#modalBlock');
-    const closeModal = document.querySelector('#closeModal');
-    const questionTitle = document.querySelector('#question');
-    const formAnswers = document.querySelector('#formAnswers');
-    const burgerBtn = document.getElementById('burger');
-    const nextButton = document.querySelector('#next');
-    const prevButton = document.querySelector('#prev');
-    const sendButton = document.querySelector('#send');
-    
-    // Инициализация Firebase один раз при загрузке страницы
-    const firebaseConfig = {
-        apiKey: "AIzaSyBPUvLR8rI4W8dqTHrjWY-3WGGlcTKbElA",
-        authDomain: "burger-92b7f.firebaseapp.com",
-        databaseURL: "https://burger-92b7f-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "burger-92b7f",
-        storageBucket: "burger-92b7f.firebasestorage.app",
-        messagingSenderId: "654645108144",
-        appId: "1:654645108144:web:0836ced116fa13cf42ca75",
-        measurementId: "G-Q1GTM90R76"
-    };
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const db = getDatabase(app);
-    const questionsRef = ref(db, 'questions');
 
-    const getData = () => {
-        formAnswers.textContent = 'LOAD';
+  const btnOpenModal = document.querySelector('#btnOpenModal');
+  const modalBlock = document.querySelector('#modalBlock');
+  const closeModal = document.querySelector('#closeModal');
+  const questionTitle = document.querySelector('#question');
+  const formAnswers = document.querySelector('#formAnswers');
+  const nextButton = document.querySelector('#next');
+  const prevButton = document.querySelector('#prev');
 
-        setTimeout(() => {
-            get(questionsRef)
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        playTest(snapshot.val());
-                    } else {
-                        formAnswers.textContent = 'Нет данных по вопросам';
-                    }
-                })
-                .catch(error => {
-                    formAnswers.textContent = 'Ошибка при получении данных!';
-                    console.error(error);
-                });
-        }, 1000);
+const questions = [
+    {
+        question: "Якого кольору бургер?",
+        answers: [
+            {
+                title: 'Стандарт',
+                url: './image/burger.png'
+            },
+            {
+                title: 'Чорний',
+                url: './image/burgerBlack.png'
+            }
+        ],
+        type: 'radio'
+    },
+    {
+        question: "З якого м'яса котлета?",
+        answers: [
+            {
+                title: 'Курка',
+                url: './image/chickenMeat.png'
+            },
+            {
+                title: 'Яловичина',
+                url: './image/beefMeat.png'
+            },
+            {
+                title: 'Свинина',
+                url: './image/porkMeat.png'
+            }
+        ],
+        type: 'radio'
+    },
+    {
+        question: "Додаткові інгредієнти ?",
+        answers: [
+            {
+                title: 'Помідор',
+                url: './image/tomato.png'
+            },
+            {
+                title: 'Огірок',
+                url: './image/cucumber.png'
+            },
+            {
+                title: 'Салат',
+                url: './image/salad.png'
+            },
+            {
+                title: 'Цибуля',
+                url: './image/onion.png'
+            }
+        ],
+        type: 'checkbox'
+    },
+    {
+        question: "Додати соус?",
+        answers: [
+            {
+                title: 'Часниковий',
+                url: './image/sauce1.png'
+            },
+            {
+                title: 'Томатний',
+                url: './image/sauce2.png'
+            },
+            {
+                title: 'Гірчичний',
+                url: './image/sauce3.png'
+            }
+        ],
+        type: 'radio'
     }
+];
 
+  let currentQuestion = 0;
 
-    btnOpenModal.addEventListener('click', () => {
-        modalBlock.classList.add('d-block');
-        getData();
+  btnOpenModal.addEventListener('click', () => {
+    modalBlock.classList.add('d-block');
+    renderQuestion(currentQuestion);
+  });
+
+  closeModal.addEventListener('click', () => {
+    modalBlock.classList.remove('d-block');
+  });
+
+  function renderAnswers(index) {
+    formAnswers.innerHTML = '';
+    questions[index].answers.forEach((answer, i) => {
+      const answerItem = document.createElement('div');
+      answerItem.classList.add('answers-item', 'd-flex', 'flex-column');
+      answerItem.innerHTML = `
+        <input type="radio" id="answerItem${i}" name="answer" class="d-none">
+        <label for="answerItem${i}" class="d-flex flex-column justify-content-between">
+          <img class="answerImg" src="${answer.url}" alt="${answer.title}">
+          <span>${answer.title}</span>
+        </label>
+      `;
+      formAnswers.appendChild(answerItem);
     });
+  }
 
-    
-    closeModal.addEventListener('click', () => {
-        modalBlock.classList.remove('d-block');
-    });
+  function renderQuestion(index) {
+    questionTitle.textContent = questions[index].question;
+    renderAnswers(index);
 
-    const playTest = (questions) => {
-        
-        const finalAnswers = [];
-        let numberQuestion = 0;
+    prevButton.disabled = index === 0;
+    nextButton.disabled = index === questions.length - 1;
+  }
 
-        const renderAnswers = (index) => {          
-            questions[index].answers.forEach((answer) => {
-                const answerItem = document.createElement('div');
-                
-                answerItem.classList.add('answers-item', 'd-flex', 'justify-content-center');
+  nextButton.addEventListener('click', () => {
+    if (currentQuestion < questions.length - 1) {
+      currentQuestion++;
+      renderQuestion(currentQuestion);
+    }
+  });
 
-                answerItem.innerHTML = `
-                <input type="${questions[index].type}" id="${answer.title}" name="answer" class="d-none" value="${answer.title}">
-                <label for="${answer.title}" class="d-flex flex-column justify-content-between">
-                <img class="answerImg" src="${ answer.url }" alt="burger">
-                <span>${ answer.title }</span>
-                </label>
-                `;
+  prevButton.addEventListener('click', () => {
+    if (currentQuestion > 0) {
+      currentQuestion--;
+      renderQuestion(currentQuestion);
+    }
+  });
 
-                formAnswers.appendChild(answerItem);
-            })
-        }
-
-    const renderQuestions = (indexQuestion) => {
-        formAnswers.innerHTML = '';
-
-        switch (true) {
-            case (numberQuestion >= 0 && numberQuestion < questions.length):
-                questionTitle.textContent = questions[indexQuestion].question;
-                renderAnswers(indexQuestion);
-
-                nextButton.classList.remove('d-none');
-                prevButton.classList.remove('d-none');
-                sendButton.classList.add('d-none');
-
-                if (numberQuestion === 0) {
-                    prevButton.classList.add('d-none');
-                }
-                break;
-
-            case (numberQuestion === questions.length):
-                questionTitle.textContent = "Введите ваш номер телефона";
-
-                nextButton.classList.add('d-none');
-                prevButton.classList.add('d-none');
-                sendButton.classList.remove('d-none');
-
-                formAnswers.innerHTML = `
-                    <div class="form-group">
-                        <label for="numberPhone">Enter your number</label>
-                        <input type="phone" class="form-control" id="numberPhone">
-                    </div>
-                `;
-                break;
-
-            case (numberQuestion === questions.length + 1):
-                questionTitle.textContent = "";
-                formAnswers.textContent = 'Дякую за проходження тесту!';
-
-                setTimeout(() => {
-                    modalBlock.classList.remove('d-block');
-                }, 2000);
-                break;
-
-            default:
-                console.warn("Некорректный номер вопроса:", numberQuestion);
-        }
-    };
-
-        renderQuestions(numberQuestion);
-
-        const checkAnswer = () => {
-            const obj = {};
-            const inputs = [...formAnswers.elements].filter((input) => input.checked || input.id === 'numberPhone')
-            console.log(inputs);
-
-            inputs.forEach((input, index) => {    
-                if(numberQuestion >= 0 && numberQuestion <= questions.length - 1){
-                    obj[`${index}_${questions[numberQuestion].question}`] = input.value
-                }
-
-                if(numberQuestion === questions.length){
-                    obj[`Номер телефона`] = input.value
-                }
-            })
-
-            finalAnswers.push(obj)
-            console.log(finalAnswers);
-            
-        }
-
-        nextButton.onclick = () => {
-            checkAnswer();
-            numberQuestion++;
-            renderQuestions(numberQuestion);
-        }
-
-        prevButton.onclick = () => {
-            numberQuestion--;
-            renderQuestions(numberQuestion);
-        }
-
-        sendButton.onclick = () => {
-            checkAnswer();
-            numberQuestion++;
-            renderQuestions(numberQuestion);
-
-            const contactsRef = ref(db, 'contacts');
-            push(contactsRef, finalAnswers)
-                .then(() => console.log('Данные отправлены:', finalAnswers))
-                .catch(err => console.error('Ошибка отправки:', err));
-        }
-    };
 });
-
-
